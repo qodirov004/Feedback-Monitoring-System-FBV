@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangi o'qituvchi - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 text-center lg:text-left">
+            <!-- Chap tomon: orqaga link + sarlavha -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                <a href="{% url 'feedback:manager_teachers' %}"
+                class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Yangi o'qituvchi qo'shish</h1>
+                    <p class="text-gray-600">O'qituvchi ma'lumotlarini kiriting</p>
+                </div>
+            </div>
+
+            <!-- O'ng tomon: Excel yuklash va yuklab olish -->
+            <div class="flex flex-wrap sm:flex-nowrap gap-2 justify-center lg:justify-end">
+                <a href="{% url 'feedback:download_teacher_template' %}"
+                class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition">
+                    📥 <span class="ml-1 sm:inline">Shablon</span>
+                </a>
+
+                <form method="post" enctype="multipart/form-data" action="{% url 'feedback:upload_teachers_excel' %}">
+                    {% csrf_token %}
+                    <label class="inline-flex items-center cursor-pointer">
+                        <input type="file" name="excel_file" accept=".xlsx" class="hidden" onchange="this.form.submit()" required>
+                        <span class="inline-flex items-center justify-center px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">
+                            ⬆️ <span class="ml-1 sm:inline">Yuklash</span>
+                        </span>
+                    </label>
+                </form>
+            </div>
+        </div>
+    </header>
+
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-2xl mx-auto">
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
+                    <form method="post" enctype="multipart/form-data" class="space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Personal Information -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Shaxsiy ma'lumotlar</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.first_name.label }}
+                                    </label>
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.last_name.label }}
+                                    </label>
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Information -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Ish ma'lumotlari</h3>
+                            <div class="grid md:grid-cols-2 gap-4">
+                                <!-- Tayinlangan sinf -->
+                                <div>
+                                    <label for="{{ form.class_assigned.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.class_assigned.label }}
+                                    </label>
+                                    {{ form.class_assigned }}
+                                    {% if form.class_assigned.errors %}
+                                        <div class="text-red-600 text-sm mt-1">{{ form.class_assigned.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <label for="{{ form.phone_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.phone_number.label }}
+                                    </label>
+                                    {{ form.phone_number }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="text-red-600 text-sm mt-1">{{ form.phone_number.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Login Information -->
+                        <div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-4">Kirish ma'lumotlari</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                        {{ form.username.label }}
+                                    </label>
+                                    {{ form.username }}
+                                    {% if form.username.errors %}
+                                        <div class="text-red-600 text-sm mt-1">{{ form.username.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="grid md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                            {{ form.password.label }}
+                                        </label>
+                                        {{ form.password }}
+                                        {% if form.password.errors %}
+                                            <div class="text-red-600 text-sm mt-1">{{ form.password.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <label for="{{ form.confirm_password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                            {{ form.confirm_password.label }}
+                                        </label>
+                                        {{ form.confirm_password }}
+                                        {% if form.confirm_password.errors %}
+                                            <div class="text-red-600 text-sm mt-1">{{ form.confirm_password.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rasm -->
+                        <div>
+                            <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700">Rasm
+                                </label>
+                            {{ form.image }}
+                            {% if form.image %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 mt-1">Max hajm: 2MB. JPG/PNG tavsiya etiladi.</p>
+                            {% if form.image.errors %}
+                                <p class="text-red-600 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                                {% for error in form.non_field_errors %}
+                                    <div class="text-red-600 text-sm">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                            <a href="{% url 'feedback:manager_teachers' %}" class="btn btn-outline">Bekor qilish</a>
+                            <button type="submit" class="btn btn-primary">O'qituvchi qo'shish</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Section -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 class="text-sm font-medium text-blue-900 mb-2">Yordam</h4>
+                <ul class="text-sm text-blue-700 space-y-1">
+                    <li>• Login noyob bo'lishi kerak</li>
+                    <li>• Parol kamida 8 ta belgidan iborat bo'lishi kerak</li>
+                    <li>• Telefon raqami ixtiyoriy maydon</li>
+                    <li>• Har bir sinf uchun faqat bitta o'qituvchi tayinlanishi mumkin</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

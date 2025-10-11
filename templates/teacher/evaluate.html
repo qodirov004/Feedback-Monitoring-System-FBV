@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Baholash - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="{% url 'feedback:teacher_dashboard' %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 mr-4">
+                    ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">O'quvchi baholash</h1>
+                    <p class="text-gray-600">{{ teacher.class_assigned.name }} sinfi</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Students List -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold mb-4">O'quvchilar ro'yxati</h3>
+                        <div class="space-y-2 max-h-96 overflow-y-auto">
+                            {% for student in students %}
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer
+                                {% if selected_student and selected_student.id == student.id %}bg-blue-50 border-blue-300{% endif %}"
+                                onclick="selectStudent({{ student.id }})">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <span class="text-blue-600 font-medium text-sm">{{ student.first_name.0 }}{{ student.last_name.0 }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-sm">{{ student.full_name }}</p>
+                                        <p class="text-xs text-gray-600">{{ student.student_id }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    {% if student.is_evaluated_this_week %}
+                                        <span class="w-2 h-2 bg-green-500 rounded-full" title="Bu hafta baholangan"></span>
+                                    {% else %}
+                                        <span class="w-2 h-2 bg-red-500 rounded-full" title="Bu hafta baholanmagan"></span>
+                                    {% endif %}
+                                    {% if student.latest_eval %}
+                                        <span class="text-xs text-gray-500">{{ student.latest_eval.total_score }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Evaluation Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6">
+                        {% if selected_student %}
+                        <div class="flex items-center space-x-4 mb-6 p-4 bg-blue-50 rounded-lg">
+                            <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                <span class="text-blue-600 font-bold">{{ selected_student.first_name.0 }}{{ selected_student.last_name.0 }}</span>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold">{{ selected_student.full_name }}</h3>
+                                <p class="text-sm text-gray-600">{{ selected_student.student_id }} - {{ selected_student.class_assigned.name }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <form method="post" class="space-y-6" id="evaluationForm">
+                            {% csrf_token %}
+                            {% if selected_student %}
+                            <input type="hidden" name="student_id" value="{{ selected_student.id }}">
+                            {% endif %}
+                            
+                            <!-- Student Selection (if no student selected) -->
+                            {% if not selected_student %}
+                            <div class="text-center py-8">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span class="text-gray-400 text-2xl">👤</span>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">O'quvchi tanlang</h3>
+                                <p class="text-gray-600">Baholash uchun chap tarafdan o'quvchi tanlang</p>
+                            </div>
+                            {% else %}
+                            
+                            <!-- Dynamic Evaluation Criteria -->
+                            <div class="space-y-6">
+                                {% for criterion in criteria %}
+                                <div>
+                                    <label for="id_criterion_{{ criterion.id }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        {{ criterion.name }}
+                                    </label>
+                                    <input type="number" 
+                                           name="criterion_{{ criterion.id }}" 
+                                           id="id_criterion_{{ criterion.id }}"
+                                           min="0" 
+                                           max="{{ criterion.max_score }}" 
+                                           placeholder="0-{{ criterion.max_score }}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                           oninput="calculateTotal()">
+                                    <div class="text-xs text-gray-500 mt-1">Maksimal: {{ criterion.max_score }} ball</div>
+                                </div>
+                                {% endfor %}
+
+                                <!-- Total Score Display -->
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-lg font-medium">Jami ball:</span>
+                                        <span id="totalScore" class="text-2xl font-bold text-blue-600">0</span>
+                                    </div>
+                                    <div class="text-sm text-gray-600 mt-1">
+                                        Holat: <span id="gradeStatus" class="font-medium">-</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label for="id_comment" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Izoh
+                                    </label>
+                                    <textarea name="comment" 
+                                              id="id_comment"
+                                              rows="3"
+                                              placeholder="Qo'shimcha izoh yozing..."
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Form Errors -->
+                            {% if form.non_field_errors %}
+                                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                                    {% for error in form.non_field_errors %}
+                                        <div class="text-red-600 text-sm">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <!-- Submit Button -->
+                            <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                                <a href="{% url 'feedback:teacher_students' %}" class="btn btn-outline">Bekor qilish</a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                                    Saqlash
+                                </button>
+                            </div>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Help Section -->
+                {% if selected_student %}
+                <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 class="text-sm font-medium text-blue-900 mb-2">Baholash mezonlari</h4>
+                    <ul class="text-sm text-blue-700 space-y-1">
+                        {% for criterion in criteria %}
+                        <li>• <strong>{{ criterion.name }} (0-{{ criterion.max_score }}):</strong> {{ criterion.name }} bo'yicha baholash</li>
+                        {% endfor %}
+                        <li>• <strong>Jami:</strong> 85+ A'lo, 70-84 Yaxshi, 55-69 Qoniqarli</li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function selectStudent(studentId) {
+        window.location.href = `{% url 'feedback:teacher_evaluate' %}?student=${studentId}`;
+    }
+    
+    function calculateTotal() {
+        let total = 0;
+        
+        // Calculate total from all criteria inputs
+        {% for criterion in criteria %}
+        const criterion_{{ criterion.id }} = parseInt(document.getElementById('id_criterion_{{ criterion.id }}').value) || 0;
+        total += criterion_{{ criterion.id }};
+        {% endfor %}
+        
+        document.getElementById('totalScore').textContent = total;
+        
+        // Grade status
+        let status = '';
+        let statusClass = '';
+        if (total >= 85) {
+            status = "A'lo";
+            statusClass = 'text-green-600';
+        } else if (total >= 70) {
+            status = 'Yaxshi';
+            statusClass = 'text-yellow-600';
+        } else if (total >= 55) {
+            status = 'Qoniqarli';
+            statusClass = 'text-orange-600';
+        } else {
+            status = 'Qoniqarsiz';
+            statusClass = 'text-red-600';
+        }
+        
+        const statusElement = document.getElementById('gradeStatus');
+        statusElement.textContent = status;
+        statusElement.className = `font-medium ${statusClass}`;
+        
+        // Enable/disable submit button
+        const submitBtn = document.getElementById('submitBtn');
+        if (total > 0) {
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Add event listeners to score inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners to all criteria inputs
+        {% for criterion in criteria %}
+        const input_{{ criterion.id }} = document.getElementById('id_criterion_{{ criterion.id }}');
+        if (input_{{ criterion.id }}) {
+            input_{{ criterion.id }}.addEventListener('input', calculateTotal);
+            input_{{ criterion.id }}.addEventListener('change', calculateTotal);
+        }
+        {% endfor %}
+        
+        // Initial calculation
+        calculateTotal();
+    });
+</script>
+{% endblock %}

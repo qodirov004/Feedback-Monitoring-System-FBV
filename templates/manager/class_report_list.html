@@ -1,0 +1,14 @@
+<h2>Sinf hisobotlari</h2>
+<ul>
+    {% for class in classes %}
+        <li>
+            {{ class.name }} 
+            <a href="{% url 'feedback:export_class_report' class.id %}" 
+               class="btn btn-sm btn-primary">
+               📄 PDF yuklab olish
+            </a>
+        </li>
+    {% empty %}
+        <li>Hali sinflar mavjud emas</li>
+    {% endfor %}
+</ul>

@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangi o'quvchi qo'shish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-center md:text-left">
+            <!-- Chap tomon: orqaga link + sarlavha -->
+            <div class="flex flex-col md:flex-row md:items-center gap-3">
+                <a href="{% url 'feedback:manager_students' %}"
+                class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if student %}O'quvchi ma'lumotlarini tahrirlash{% else %}Yangi o'quvchi qo'shish{% endif %}
+                    </h1>
+                    <p class="text-gray-600">O'quvchi ma'lumotlarini kiriting</p>
+                </div>
+
+                {% if not student %}
+                <!-- Faqat yangi o'quvchi qo'shish holatida chiqadi -->
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 justify-center lg:justify-end">
+                    <a href="{% url 'feedback:download_student_template' %}"
+                    class="inline-flex items-center justify-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md text-green-700 bg-green-50 hover:bg-green-100 transition">
+                        📥 <span class="ml-1 sm:inline">Shablon</span>
+                    </a>
+
+                    <form method="post" enctype="multipart/form-data" action="{% url 'feedback:upload_students_excel' %}">
+                        {% csrf_token %}
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="file" name="excel_file" accept=".xlsx" class="hidden" onchange="this.form.submit()" required>
+                            <span class="inline-flex items-center justify-center px-3 py-2 border border-blue-600 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition">
+                                ⬆️ <span class="ml-1 sm:inline">Yuklash</span>
+                            </span>
+                        </label>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-3xl mx-auto bg-white rounded shadow p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        {% if student %} O'quvchi ma'lumotlarini tahrirlash {% else %} Yangi o'quvchi qo'shish {% endif%}                        
+                    </h1>
+                    
+                    <p class="text-sm text-gray-600">O'quvchi ma'lumotlarini kiriting</p>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Ism -->
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Ism *</label>
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.first_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Familiya -->
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Familiya *</label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.last_name.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tug'ilgan sana -->
+                    <div>
+                        <label for="{{ form.date_of_birth.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Tug'ilgan sana *</label>
+                        {{ form.date_of_birth }}
+                        {% if form.date_of_birth.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.date_of_birth.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Ota-ona telefoni -->
+                    <div>
+                        <label for="{{ form.parent_phone.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Ota-ona telefoni</label>
+                        {{ form.parent_phone }}
+                        {% if form.parent_phone.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.parent_phone.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Sinf -->
+                    <div>
+                        <label for="{{ form.class_assigned.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Sinf *</label>
+                        {{ form.class_assigned }}
+                        {% if form.class_assigned.errors %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.class_assigned.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Rasm -->
+                    <div>
+                        <label for="{{ form.image.id_for_label }}" class="block text-sm font-medium text-gray-700">Rasm
+                            (ixtiyoriy)</label>
+                        {{ form.image }}
+                        {% if form.image %}
+                        <p class="text-red-600 text-sm mt-1">{{ form.image.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Max hajm: 2MB. JPG/PNG tavsiya etiladi.</p>
+                    </div>
+                </div>
+
+                {% if form.non_field_errors %}
+                <div class="bg-red-100 border border-red-300 text-red-700 p-3 rounded">
+                    {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="flex justify-end mt-6 gap-4">
+                    <a href="{% url 'feedback:manager_students' %}"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Bekor qilish</a>
+                    <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

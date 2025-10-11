@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}O'qituvchi ma'lumotlarini tahrirlash{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- HEADER QISMI -->
+    <header class="bg-white shadow-sm border-b mb-6">
+        <div class="container mx-auto px-4 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <a href="{% url 'feedback:manager_teachers' %}"
+               class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                ← Orqaga
+            </a>
+            <h1 class="text-xl sm:text-2xl font-bold text-gray-900">O'qituvchi ma'lumotlarini tahrirlash</h1>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white shadow rounded p-6 mx-auto w-full max-w-2xl">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.non_field_errors }}
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        {{ form.first_name.label_tag }}
+                        {{ form.first_name }}
+                        {{ form.first_name.errors }}
+                    </div>
+                    <div>
+                        {{ form.last_name.label_tag }}
+                        {{ form.last_name }}
+                        {{ form.last_name.errors }}
+                    </div>
+                    <div class="sm:col-span-2">
+                        {{ form.username.label_tag }}
+                        {{ form.username }}
+                        {{ form.username.errors }}
+                    </div>
+                    <div>
+                        {{ form.subject.label_tag }}
+                        {{ form.subject }}
+                        {{ form.subject.errors }}
+                    </div>
+                    <div>
+                        {{ form.class_assigned.label_tag }}
+                        {{ form.class_assigned }}
+                        {{ form.class_assigned.errors }}
+                    </div>
+                    <div class="sm:col-span-2">
+                        {{ form.phone_number.label_tag }}
+                        {{ form.phone_number }}
+                        {{ form.phone_number.errors }}
+                    </div>
+                    <div class="sm:col-span-2">
+                        {{ form.image.label_tag }}
+                        {{ form.image }}
+                        {{ form.image.errors }}
+                    </div>
+                    <div>
+                        {{ form.password.label_tag }}
+                        {{ form.password }}
+                        {{ form.password.errors }}
+                    </div>
+                    <div>
+                        {{ form.confirm_password.label_tag }}
+                        {{ form.confirm_password }}
+                        {{ form.confirm_password.errors }}
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-col sm:flex-row sm:justify-end gap-2">
+                    <a href="{% url 'feedback:manager_teachers' %}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">
+                        Bekor qilish
+                    </a>
+                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Saqlash
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

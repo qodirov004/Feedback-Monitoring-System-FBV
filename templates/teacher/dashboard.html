@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}O'qituvchi Dashboard - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">O'qituvchi Dashboard</h1>
+                <p class="text-gray-600">{{ teacher.class_assigned.name }} sinf</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-gray-600">Salom, {{ user.get_full_name }}</span>
+                <a href="{% url 'feedback:logout' %}" class="btn btn-outline">Chiqish</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Overview View -->
+        <div id="overview-view">
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <!-- O'quvchilar -->
+                <a href="{% url 'feedback:teacher_students' %}" class="bg-white p-6 rounded-lg shadow card-hover hover:shadow-lg transition transform hover:-translate-y-1">
+                    <div class="flex flex-row items-center justify-between pb-2">
+                        <h3 class="text-sm font-medium">Jami o'quvchilar</h3>
+                        <span class="text-gray-400">👥</span>
+                    </div>
+                    <div class="text-2xl font-bold">{{ total_students }}</div>
+                    <p class="text-xs text-gray-500">{{ teacher.class_assigned.name }} sinfi</p>
+                </a>
+
+                <!-- Baholash -->
+                <a href="{% url 'feedback:teacher_evaluate' %}" class="bg-white p-6 rounded-lg shadow card-hover hover:shadow-lg transition transform hover:-translate-y-1">
+                    <div class="flex flex-row items-center justify-between pb-2">
+                        <h3 class="text-sm font-medium">Jami baholashlar</h3>
+                        <span class="text-gray-400">📊</span>
+                    </div>
+                    <div class="text-2xl font-bold">{{ total_evaluations }}</div>
+                    <p class="text-xs text-gray-500">Barcha vaqt</p>
+                </a>
+
+                <!-- Haftalik baholangan -->
+                <a href="{% url 'feedback:teacher_evaluate' %}" class="bg-white p-6 rounded-lg shadow card-hover hover:shadow-lg transition transform hover:-translate-y-1">
+                    <div class="flex flex-row items-center justify-between pb-2">
+                        <h3 class="text-sm font-medium">Bu hafta baholangan</h3>
+                        <span class="text-gray-400">📈</span>
+                    </div>
+                    <div class="text-2xl font-bold">{{ weekly_evaluations }}</div>
+                    <p class="text-xs text-gray-500">{{ total_students }} dan</p>
+                </a>
+
+                <!-- Statistika -->
+                <a href="{% url 'feedback:teacher_statistics' %}" class="bg-white p-6 rounded-lg shadow card-hover hover:shadow-lg transition transform hover:-translate-y-1">
+                    <div class="flex flex-row items-center justify-between pb-2">
+                        <h3 class="text-sm font-medium">O'rtacha ball</h3>
+                        <span class="text-gray-400">⭐</span>
+                    </div>
+                    <div class="text-2xl font-bold">{{ avg_score }}</div>
+                    <p class="text-xs text-gray-500">100 balldan</p>
+                </a>
+            </div>
+
+            <div class="grid lg:grid-cols-2 gap-8 mb-8">
+                <!-- Recent Evaluations -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold">So'nggi baholashlar</h3>
+                        <p class="text-sm text-gray-600">Oxirgi 5 ta baholash</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                        <div class="space-y-4">
+                            {% for evaluation in recent_evaluations %}
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                        <span class="text-green-600 font-medium">{{ evaluation.student.first_name.0 }}{{ evaluation.student.last_name.0 }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ evaluation.student.full_name }}</p>
+                                        <p class="text-sm text-gray-600">{{ evaluation.created_at|date:"d.m.Y H:i" }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-lg font-bold 
+                                        {% if evaluation.total_score >= 85 %}text-green-600
+                                        {% elif evaluation.total_score >= 70 %}text-yellow-600
+                                        {% else %}text-red-600{% endif %}">
+                                        {{ evaluation.total_score }}
+                                    </p>
+                                    <p class="text-sm text-gray-600">ball</p>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <p class="text-gray-500 text-center py-4">Hali baholash yo'q</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Unevaluated Students -->
+                <div class="bg-white rounded-lg shadow">
+                    <div class="p-6">
+                        <h3 class="text-lg font-semibold">Baholanmagan o'quvchilar</h3>
+                        <p class="text-sm text-gray-600">Bu hafta baholanmagan o'quvchilar</p>
+                    </div>
+                    <div class="p-6 pt-0">
+                        <div class="space-y-3">
+                            {% for student in unevaluated_students %}
+                            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                                        <span class="text-yellow-600 font-medium">{{ student.first_name.0 }}{{ student.last_name.0 }}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium">{{ student.full_name }}</p>
+                                        <p class="text-sm text-gray-600">{{ student.student_id }}</p>
+                                    </div>
+                                </div>
+                                <a href="{% url 'feedback:teacher_evaluate' %}?student={{ student.id }}" 
+                                   class="text-sm text-blue-600 hover:text-blue-800">
+                                    Baholash
+                                </a>
+                            </div>
+                            {% empty %}
+                            <div class="text-center py-4">
+                                <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <span class="text-green-600 text-xl">✅</span>
+                                </div>
+                                <p class="text-green-600 font-medium">Barcha o'quvchilar baholangan!</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weekly Progress -->
+            <div class="bg-white rounded-lg shadow mb-8">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold">Bu hafta progress</h3>
+                    <p class="text-sm text-gray-600">Haftalik baholash ko'rsatkichi</p>
+                </div>
+                <div class="p-6 pt-0">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-sm text-gray-600">Baholangan o'quvchilar</span>
+                        <span class="text-sm font-medium">{{ weekly_evaluations }}/{{ total_students }}</span>
+                    </div>
+                    <div class="progress-bar mb-4">
+                        <div class="progress-bar-fill 
+                            {% if weekly_percentage >= 80 %}bg-green-500
+                            {% elif weekly_percentage >= 60 %}bg-yellow-500
+                            {% else %}bg-red-500{% endif %}" 
+                            style="width: {{ weekly_percentage }}%"></div>
+                    </div>
+                    <div class="text-center">
+                        <span class="text-2xl font-bold 
+                            {% if weekly_percentage >= 80 %}text-green-600
+                            {% elif weekly_percentage >= 60 %}text-yellow-600
+                            {% else %}text-red-600{% endif %}">
+                            {{ weekly_percentage }}%
+                        </span>
+                        <p class="text-sm text-gray-600">baholash tugallangan</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="p-6">
+                    <h3 class="text-lg font-semibold mb-4">Tezkor amallar</h3>
+                    <div class="grid md:grid-cols-3 gap-4">
+                        <a href="{% url 'feedback:teacher_evaluate' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-blue-600">📝</span>
+                            </div>
+                            <div>
+                                <p class="font-medium">O'quvchi baholash</p>
+                                <p class="text-sm text-gray-600">Yangi baholash qo'shish</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'feedback:teacher_students' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-green-600">👥</span>
+                            </div>
+                            <div>
+                                <p class="font-medium">O'quvchilar ro'yxati</p>
+                                <p class="text-sm text-gray-600">Barcha o'quvchilarni ko'rish</p>
+                            </div>
+                        </a>
+                        
+                        <a href="{% url 'feedback:teacher_statistics' %}" class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                <span class="text-purple-600">📊</span>
+                            </div>
+                            <div>
+                                <p class="font-medium">Batafsil statistika</p>
+                                <p class="text-sm text-gray-600">To'liq tahlil ko'rish</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showView(view) {
+        console.log('Showing view:', view);
+    }
+</script>
+{% endblock %}

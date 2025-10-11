@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}O'quvchilar - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                    <a href="{% url 'feedback:manager_dashboard' %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                        ← Orqaga
+                    </a>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900">O'quvchilar</h1>
+                        <p class="text-gray-600">Barcha o'quvchilar ro'yxati</p>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap sm:flex-nowrap gap-10 justify-center lg:justify-end">
+                    <a href="{% url 'feedback:manager_students_create' %}" class="btn btn-primary w-auto">
+                        ➕ Yangi o'qituvchi
+                    </a>
+                    <a href="{% url 'feedback:export_excel' %}" class="btn btn-outline w-auto">
+                        📥 Excel eksport
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Filter/Search -->
+        {% comment %} <div class="bg-white rounded-lg shadow mb-6 p-6">
+            <form method="get" class="grid md:grid-cols-4 gap-4">
+                <div>
+                    <input type="text" name="search" value="{{ search }}" 
+                           placeholder="O'quvchi ismi bo'yicha qidirish..."
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div>
+                    <select name="class" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">Barcha sinflar</option>
+                        {% for class in classes %}
+                            <option value="{{ class.name }}" {% if class_filter == class.name %}selected{% endif %}>
+                                {{ class.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <button type="submit" class="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        Qidirish
+                    </button>
+
+                    {% if search or class_filter %}
+                    <a href="{% url 'feedback:manager_students' %}" class="w-full sm:w-auto border border-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-100 text-center">
+                        Tozalash
+                    </a>
+                    {% endif %}
+                </div>
+            </form>
+        </div> {% endcomment %}
+
+        <!-- Accordion for Classes -->
+        <div class="space-y-4">
+            {% for class in classes %}
+            <div class="border border-gray-200 rounded-lg shadow bg-white">
+                <button type="button" class="w-full flex justify-between items-center px-6 py-4 text-left text-gray-900 text-lg font-semibold focus:outline-none hover:bg-gray-50" onclick="toggleAccordion('accordion-{{ class.id }}')">
+                    {{ class.name }} sinfdagi o‘quvchilar
+                    <svg id="icon-{{ class.id }}" class="w-5 h-5 transition-transform transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div id="accordion-{{ class.id }}" class="hidden border-t border-gray-200 overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">O'quvchi</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sinf</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Jami baholash</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">O'rtacha</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Holat</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">So‘nggi baholash</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amallar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for student in students %}
+                                {% if student.class_assigned.name == class.name %}
+                                <tr class="hover:bg-gray-50">
+                                    <td class="px-6 py-4 whitespace-nowrap flex items-center">
+                                        <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                                            {% if student.image.name %}
+                                            <img src="{{ student.image.url }}" alt="{{ student.full_name }}" class="w-full h-full object-cover">
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-medium text-gray-900">{{ student.full_name }}</div>
+                                            <div class="text-sm text-gray-500">{{ student.date_of_birth }}</div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">{{ student.class_assigned.name }}</td>
+                                    <td class="px-6 py-4">{{ student.student_id }}</td>
+                                    <td class="px-6 py-4">{{ student.total_evals }}</td>
+                                    <td class="px-6 py-4">
+                                        {% if student.avg_score > 0 %}
+                                        <span class="text-sm font-medium 
+                                            {% if student.avg_score >= 85 %}text-green-600
+                                            {% elif student.avg_score >= 70 %}text-yellow-600
+                                            {% else %}text-red-600{% endif %}">
+                                            {{ student.avg_score|floatformat:1 }}
+                                        </span>
+                                        {% else %}
+                                        <span class="text-gray-400">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if student.status == "A'lo" %}
+                                            <span class="badge badge-green">{{ student.status }}</span>
+                                        {% elif student.status == "Yaxshi" %}
+                                            <span class="badge badge-yellow">{{ student.status }}</span>
+                                        {% elif student.status == "Qoniqarli" %}
+                                            <span class="badge badge-red">{{ student.status }}</span>
+                                        {% else %}
+                                            <span class="badge badge-red">Baholanmagan</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if student.latest_eval %}
+                                            {{ student.latest_eval.created_at|date:"d.m.Y" }}
+                                        {% else %}
+                                            Hech qachon
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <a href="{% url 'feedback:manager_students_detail' student.id %}" class="text-blue-600 hover:text-blue-900 mr-3">Ko'rish</a>
+                                        <a href="{% url 'feedback:manager_students_edit' student.id %}" class="text-gray-600 hover:text-gray-900">Tahrirlash</a>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% empty %}
+                                <tr><td colspan="8" class="text-center py-4 text-gray-500">O'quvchilar topilmadi</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function toggleAccordion(id) {
+        const panel = document.getElementById(id);
+        const icon = document.getElementById("icon-" + id.split("-")[1]);
+        panel.classList.toggle("hidden");
+        icon.classList.toggle("rotate-180");
+    }
+</script>
+{% endblock %}

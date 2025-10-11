@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}Kriteriyalar - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center">
+                <a href="{% url 'feedback:manager_dashboard' %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 mr-4">
+                    ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Kriteriyalar boshqaruvi</h1>
+                    <p class="text-gray-600">Baholash kriteriyalarini boshqaring</p>
+                </div>
+            </div>
+            <a href="{% url 'feedback:manager_criteria_create' %}" class="btn btn-primary">
+                + Yangi kriteriya
+            </a>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="p-6">
+                <form method="get" class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <input type="text" name="search" value="{{ search }}" 
+                               placeholder="Kriteriya nomi bo'yicha qidirish..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="btn btn-outline">
+                        Qidirish
+                    </button>
+                    {% if search %}
+                    <a href="{% url 'feedback:manager_criteria' %}" class="btn btn-outline">
+                        Tozalash
+                    </a>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+
+        <!-- Criteria List -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="p-6">
+                <h3 class="text-lg font-semibold mb-4">Kriteriyalar ro'yxati</h3>
+                
+                {% if criteria %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Kriteriya nomi
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Maksimal ball
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Holat
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Yaratilgan sana
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Amallar
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for criterion in criteria %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ criterion.name }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">
+                                        {{ criterion.max_score }} ball
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if criterion.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if criterion.is_active %}Faol{% else %}Nofaol{% endif %}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ criterion.created_at|date:"d.m.Y H:i" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'feedback:manager_criteria_edit' criterion.id %}" 
+                                           class="text-blue-600 hover:text-blue-900">
+                                            Tahrirlash
+                                        </a>
+                                        <button onclick="toggleStatus({{ criterion.id }}, {{ criterion.is_active|yesno:'false,true' }})"
+                                                class="text-yellow-600 hover:text-yellow-900">
+                                            {% if criterion.is_active %}Nofaollashtirish{% else %}Faollashtirish{% endif %}
+                                        </button>
+                                        <a href="{% url 'feedback:manager_criteria_delete' criterion.id %}" 
+                                           class="text-red-600 hover:text-red-900">
+                                            O'chirish
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if criteria.has_other_pages %}
+                <div class="mt-6 flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        {{ criteria.start_index }}-{{ criteria.end_index }} dan {{ criteria.paginator.count }} ta
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if criteria.has_previous %}
+                        <a href="?page={{ criteria.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                           class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                            Oldingi
+                        </a>
+                        {% endif %}
+                        
+                        {% for num in criteria.paginator.page_range %}
+                        {% if num == criteria.number %}
+                        <span class="px-3 py-1 bg-blue-500 text-white rounded text-sm">{{ num }}</span>
+                        {% elif num > criteria.number|add:'-3' and num < criteria.number|add:'3' %}
+                        <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}" 
+                           class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">{{ num }}</a>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if criteria.has_next %}
+                        <a href="?page={{ criteria.next_page_number }}{% if search %}&search={{ search }}{% endif %}" 
+                           class="px-3 py-1 border border-gray-300 rounded text-sm hover:bg-gray-50">
+                            Keyingi
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% else %}
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <span class="text-gray-400 text-2xl">📋</span>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">Kriteriyalar mavjud emas</h3>
+                    <p class="text-gray-600 mb-4">Hali hech qanday kriteriya yaratilmagan</p>
+                    <a href="{% url 'feedback:manager_criteria_create' %}" class="btn btn-primary">
+                        Birinchi kriteriyani yaratish
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleStatus(criterionId, currentStatus) {
+    if (confirm('Kriteriya holatini o\'zgartirishni tasdiqlaysizmi?')) {
+        fetch(`/api/criterion/${criterionId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Xatolik yuz berdi: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Xatolik yuz berdi');
+        });
+    }
+}
+</script>
+{% endblock %}
+

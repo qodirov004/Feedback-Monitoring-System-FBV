@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistika - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex flex-col lg:flex-row gap-4 lg:items-center justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <a href="{% url 'feedback:teacher_dashboard' %}"
+                   class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                    ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Statistika</h1>
+                    <p class="text-gray-600">{{ teacher.class_assigned.name }} sinf</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                <button class="w-full sm:w-auto bg-blue-600 text-white px-4 py-1.5 rounded hover:bg-blue-700"
+                        onclick="alert('Excel fayl yuklab olinmoqda...')">
+                    📅 Excel eksport
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Bar Chart -->
+        <div class="bg-white rounded-lg shadow mb-8 p-6">
+            <h3 class="text-lg font-semibold">O'rtacha ball bo'yicha taqqoslash</h3>
+            <div style="height:300px;"><canvas id="avgScoreBarChart" class="w-full h-full"></canvas></div>
+        </div>
+
+        <!-- Pie Charts -->
+        <div class="grid lg:grid-cols-2 gap-8 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold">Ballar taqsimoti</h3>
+                <div style="height:300px;"><canvas id="scoreDistributionChart" class="w-full h-full"></canvas></div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-6">
+                <h3 class="text-lg font-semibold">Bu hafta baholanganlar</h3>
+                <div style="height:300px;"><canvas id="weeklyEvaluatedChart" class="w-full h-full"></canvas></div>
+            </div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="bg-white rounded-lg shadow mb-8 p-6">
+            <h3 class="text-lg font-semibold">Haftalik o'sish</h3>
+            <div style="height:300px;"><canvas id="weeklyProgressChart" class="w-full h-full"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Weekly Progress (Line Chart)
+    const weeklyProgress = {{ weekly_progress|safe }};
+    const weeks = weeklyProgress.map(w => w.week);
+    const avgScores = weeklyProgress.map(w => w.avg_score);
+
+    new Chart(document.getElementById("weeklyProgressChart"), {
+        type: 'line',
+        data: {
+            labels: weeks,
+            datasets: [{
+                label: "O'rtacha ball",
+                data: avgScores,
+                borderColor: 'blue',
+                backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Score Distribution (Pie Chart)
+    new Chart(document.getElementById("scoreDistributionChart"), {
+        type: 'pie',
+        data: {
+            labels: ["A'lo", "Yaxshi", "Qoniqarli", "Baholanmagan"],
+            datasets: [{
+                data: [{{ excellent_count }}, {{ good_count }}, {{ satisfactory_count }}, {{ unevaluated_count }}],
+                backgroundColor: ['#16a34a', '#facc15', '#ef4444', '#9ca3af']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+
+    // Average Score by Category (Bar Chart)
+    new Chart(document.getElementById("avgScoreBarChart"), {
+        type: 'bar',
+        data: {
+            labels: ["Uy vazifasi", "Tartib-intizom", "Forma"],
+            datasets: [{
+                label: "O'rtacha ball",
+                data: [
+                    {{ category_averages.homework_avg }},
+                    {{ category_averages.discipline_avg }},
+                    {{ category_averages.uniform_avg }}
+                ],
+                backgroundColor: ['#3b82f6', '#ef4444', '#8b5cf6'],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        stepSize: 10
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ": " + context.raw + " ball";
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Weekly Evaluated Pie Chart
+    new Chart(document.getElementById("weeklyEvaluatedChart"), {
+        type: 'pie',
+        data: {
+            labels: ["Baholangan", "Baholanmagan"],
+            datasets: [{
+                data: [{{ weekly_evaluated }}, {{ total_students|add:"-"|add:weekly_evaluated }}],
+                backgroundColor: ['#4ade80', '#ef4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+</script>
+{% endblock %}

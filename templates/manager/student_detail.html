@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.full_name }} - O'quvchi ma'lumotlari{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main-container {
+        display: flex;
+        min-height: calc(100vh - 80px);
+    }
+    .left-sidebar {
+        width: 320px;
+        background: white;
+        border-right: 1px solid #dee2e6;
+        padding: 2rem;
+    }
+
+    /* Student avatar to‘rtburchak, 300x400px */
+    .student-avatar {
+        width: 300px;
+        height: 400px;
+        margin: 0 auto 1rem;
+        overflow: hidden;
+        border: 3px solid #dee2e6;
+        border-radius: 0; /* to‘rtburchak */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9fafb;
+    }
+
+    .student-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 0;
+        display: block;
+    }
+
+    .right-content {
+        flex: 1;
+        padding: 2rem;
+        background: #f8f9fa;
+        font-size: 1rem;
+    }
+    @media (max-width: 768px) {
+        .main-container {
+            flex-direction: column;
+        }
+        .left-sidebar {
+            width: 100%;
+        }
+        /* Telefonlarda ham 300x400px saqlanadi */
+        .student-avatar {
+            width: 300px;
+            height: 400px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ✅ Yangi Header -->
+<header class="bg-white shadow-sm border-b">
+    <div class="container mx-auto px-4 py-4">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <!-- Chap tomon -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <a href="{% url 'feedback:manager_students' %}" class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                    ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">{{ student.full_name }}</h1>
+                    <p class="text-gray-600">Shaxsiy ma'lumotlar</p>
+                </div>
+            </div>
+
+            <!-- O‘ng tomon: Tugmalar -->
+            <div class="flex flex-wrap sm:flex-nowrap gap-4 justify-center lg:justify-end">
+                <a href="{% url 'feedback:manager_students_edit' student.id %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium">
+                    ✏️ Tahrirlash
+                </a>
+                <form method="post" action="{% url 'feedback:manager_students_delete' student.id %}" onsubmit="return confirm('O‘chirishga ishonchingiz komilmi?');">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-medium">
+                        🗑️ O‘chirish
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Main Container -->
+<div class="main-container">
+    <!-- Left Sidebar -->
+    <div class="left-sidebar">
+        <div class="student-avatar text-center mb-4">
+            {% if student.image %}
+                <img src="{{ student.image.url }}" alt="{{ student.full_name }}">
+            {% else %}
+                <div class="w-full h-full flex items-center justify-center bg-gray-200 text-gray-500 text-6xl">
+                    <span>👤</span>
+                </div>
+            {% endif %}
+        </div>
+        <div class="text-center mb-6">
+            <h2 class="text-xl font-semibold">{{ student.full_name }}</h2>
+            <p class="text-gray-500">
+                {% if student.class_assigned %}
+                    {{ student.class_assigned.name }} sinf o‘quvchisi
+                {% else %}
+                    Sinf biriktirilmagan
+                {% endif %}
+            </p>
+        </div>
+        <div class="text-center">
+            <p class="text-sm font-medium text-gray-600">Jami baholar</p>
+            <p class="text-2xl font-bold">{{ total_evaluations|default:"0" }}</p>
+            <p class="text-sm mt-2 font-medium text-gray-600">O‘rtacha ball</p>
+            <p class="text-2xl font-bold">{{ avg_score|default:"0" }}</p>
+        </div>
+    </div>
+
+    <!-- Right Content -->
+    <div class="right-content">
+        <div class="bg-white rounded shadow p-6 mb-6">
+            <h3 class="text-lg font-semibold mb-4">Shaxsiy ma'lumotlar</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Ism</p>
+                    <p class="font-medium">{{ student.first_name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Familiya</p>
+                    <p class="font-medium">{{ student.last_name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ota-ona telefoni</p>
+                    {% if student.parent_phone %}
+                        <p class="font-medium"><i class="fas fa-phone"></i> {{ student.parent_phone }}</p>
+                    {% else %}
+                        <p class="text-muted">Ko‘rsatilmagan</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded shadow p-6">
+            <h3 class="text-lg font-semibold mb-4">Ta'lim ma'lumotlari</h3>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">Sinf</p>
+                    <p class="font-medium">{{ student.class_assigned.name }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ro'yxatdan o'tgan</p>
+                    <p class="font-medium">{{ student.enrollment_date|date:"d.m.Y" }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Ta'lim muddati</p>
+                    <p class="font-medium">{{ student.days_since_creation|default:"0" }} kun</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">O‘quvchi IDsi</p>
+                    <p class="font-medium">{{ student.student_id|default:"ID kiritilmagan" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("Student detail page loaded.");
+    });
+</script>
+{% endblock %}

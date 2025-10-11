@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block title %}O'quvchilar Statistikasi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <!-- Chap blok: orqaga link + sarlavha -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <a href="{% url 'feedback:manager_statistics' %}" 
+                class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                    ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold text-gray-900">O'quvchilar statistikasi</h1>
+                    <p class="text-gray-600 text-sm sm:text-base">Sinflar bo'yicha o'quvchilar o'rtacha balli</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+
+    <!-- Content -->
+    <div class="container mx-auto py-8 px-4">
+        <form method="get" class="mb-6 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+            <select name="class_id" class="w-full sm:w-64 border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Barcha sinflar</option>
+                {% for cls in classes %}
+                <option value="{{ cls.id }}" {% if selected_class_id == cls.id %}selected{% endif %}>
+                    {{ cls.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <select name="period" class="w-full sm:w-48 border border-gray-300 rounded-md px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="weekly" {% if period == 'weekly' %}selected{% endif %}>Haftalik</option>
+                <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Oylik</option>
+                <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yillik</option>
+            </select>
+
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 w-full sm:w-auto">
+                Ko'rsatish
+            </button>
+
+            <button type="submit" formaction="{% url 'feedback:export_students_statistics_pdf' %}" formmethod="get" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full sm:w-auto text-center">
+                📄 PDF eksport
+            </button>
+        </form>
+
+        <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-2">O'rtacha ball ({{ period }})</h2>
+            <div class="relative" style="min-height:300px;">
+                <canvas id="studentBarChart"></canvas>
+            </div>
+        </div>
+
+        {{ chart_data|json_script:"chart-data" }}
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+            const ctx = document.getElementById('studentBarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        label: 'O‘rtacha ball',
+                        data: chartData.scores,
+                        backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                        borderColor: 'rgba(37, 99, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        </script>
+    </div>
+</div>
+{% endblock %}
+
+

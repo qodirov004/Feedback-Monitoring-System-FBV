@@ -1,0 +1,17 @@
+<h2>📂 Hisobotlar</h2>
+
+<a href="{% url 'export_school_report' %}" class="btn btn-primary">📊 Umumiy maktab hisobotini yuklash</a>
+<br><br>
+
+{% for class in classes %}
+    <a href="{% url 'feedback:export_class_report' class.id %}" class="btn btn-success">
+        📘 {{ class.name }} sinf hisobotini yuklash
+    </a><br>
+{% endfor %}
+<br>
+
+{% for student in students %}
+    <a href="{% url 'export_student_report' student.id %}" class="btn btn-warning">
+        👨‍🎓 {{ student.full_name }} hisobotini yuklash
+    </a><br>
+{% endfor %}

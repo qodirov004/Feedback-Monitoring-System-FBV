@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ teacher.user.get_full_name }} - O'qituvchi ma'lumotlari</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        /* Teacher Detail Page Specific Styles */
+        .teacher-avatar {
+            width: 400px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid #e9ecef;
+            border-radius: 0;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .teacher-avatar:hover {
+            transform: scale(1.05);
+            border-color: #0d6efd;
+            box-shadow: 0 0 20px rgba(13, 110, 253, 0.3);
+        }
+
+        .teacher-avatar::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s ease;
+            opacity: 0;
+        }
+
+        .teacher-avatar:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s ease-in-out;
+        }
+
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .stat-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin-bottom: 5px;
+        }
+
+        .stat-item:last-child {
+            border-bottom: none;
+        }
+
+        .stat-item:hover {
+            background-color: rgba(13, 110, 253, 0.05);
+            transform: translateY(-2px);
+            padding-left: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #f1f3f4;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: #f8f9fa;
+            border-left: 4px solid #0d6efd;
+        }
+
+        .info-item:hover {
+            background-color: #e3f2fd;
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid rgba(0, 0, 0, 0.125);
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #0d6efd, #20c997, #ffc107);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        /* Enhanced Button Styles with Function-Based Colors */
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.4s, height 0.4s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Edit Button - Blue */
+        .btn-edit {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+
+        .btn-edit:hover {
+            background: linear-gradient(135deg, #0056b3, #004085);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Print Button - Purple */
+        .btn-print {
+            background: linear-gradient(135deg, #6f42c1, #5a2d91);
+            color: white;
+        }
+
+        .btn-print:hover {
+            background: linear-gradient(135deg, #5a2d91, #4c1f78);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Export Button - Green */
+        .btn-export {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: linear-gradient(135deg, #1e7e34, #155724);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Back Button - Gray */
+        .btn-back {
+            background: linear-gradient(135deg, #6c757d, #545b62);
+            color: white;
+        }
+
+        .btn-back:hover {
+            background: linear-gradient(135deg, #545b62, #3d4449);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Phone Button - Teal */
+        .btn-phone {
+            background: linear-gradient(135deg, #20c997, #17a2b8);
+            color: white;
+        }
+
+        .btn-phone:hover {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Email Button - Orange */
+        .btn-email {
+            background: linear-gradient(135deg, #fd7e14, #e55a00);
+            color: white;
+        }
+
+        .btn-email:hover {
+            background: linear-gradient(135deg, #e55a00, #cc4900);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Status Toggle Button - Warning */
+        .btn-status {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+            font-weight: 700;
+        }
+
+        .btn-status:hover {
+            background: linear-gradient(135deg, #e0a800, #d39e00);
+            color: #212529;
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Students Button - Indigo */
+        .btn-students {
+            background: linear-gradient(135deg, #6610f2, #520dc2);
+            color: white;
+        }
+
+        .btn-students:hover {
+            background: linear-gradient(135deg, #520dc2, #4209a3);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        /* Refresh Button - Cyan */
+        .btn-refresh {
+            background: linear-gradient(135deg, #17a2b8, #138496);
+            color: white;
+        }
+
+        .btn-refresh:hover {
+            background: linear-gradient(135deg, #138496, #0f6674);
+            transform: translateY(-3px) scale(1.05);
+        }
+
+        .progress {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 50px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            transition: width 1.5s ease-in-out;
+            position: relative;
+            overflow: hidden;
+            border-radius: 50px;
+        }
+
+        .progress-bar::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background-image: linear-gradient(45deg,
+                    rgba(255, 255, 255, 0.15) 25%,
+                    transparent 25%,
+                    transparent 50%,
+                    rgba(255, 255, 255, 0.15) 50%,
+                    rgba(255, 255, 255, 0.15) 75%,
+                    transparent 75%,
+                    transparent);
+            background-size: 1rem 1rem;
+            animation: progress-bar-stripes 1s linear infinite;
+        }
+
+        @keyframes progress-bar-stripes {
+            0% {
+                background-position: 1rem 0;
+            }
+
+            100% {
+                background-position: 0 0;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .performance-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .performance-badge:hover {
+            transform: scale(1.05);
+        }
+
+        .activity-item {
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .activity-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-success {
+            background-color: rgba(25, 135, 84, 0.1);
+            border-left-color: #198754;
+        }
+
+        .activity-warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border-left-color: #ffc107;
+        }
+
+        .activity-danger {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left-color: #dc3545;
+        }
+
+        .activity-secondary {
+            background-color: rgba(108, 117, 125, 0.1);
+            border-left-color: #6c757d;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .teacher-avatar {
+                width: 180px;
+                height: 180px;
+            }
+
+            .btn-toolbar {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .btn-group {
+                width: 100%;
+                display: flex;
+            }
+
+            .btn-group .btn {
+                flex: 1;
+                margin-right: 0.25rem;
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            .info-item {
+                margin-bottom: 10px;
+                padding: 10px;
+            }
+
+            .stat-item {
+                padding: 10px 0;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .teacher-avatar {
+                width: 300px;
+                height: 400px;
+            }
+
+            .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.75rem;
+            }
+
+            .card-body {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Print Styles */
+        @media print {
+
+            .btn-toolbar,
+            .no-print {
+                display: none !important;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #000;
+                break-inside: avoid;
+            }
+
+            .teacher-avatar {
+                border: 2px solid #000;
+            }
+
+            body {
+                font-size: 12pt;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Header with Navbar Actions -->
+        <header class="bg-white shadow-sm py-3 px-4 mb-4 border-bottom">
+            <div class="d-flex justify-content-between align-items-center flex-wrap">
+                <div>
+                    <h2 class="mb-0">
+                        <i class="fas fa-user-tie"></i> {{ teacher.user.get_full_name }}
+                        <span class="badge {% if teacher.is_active %}bg-success{% else %}bg-danger{% endif %} ms-2">
+                            {% if teacher.is_active %}Faol{% else %}Nofaol{% endif %}
+                        </span>
+                    </h2>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+                    <a href="{% url 'feedback:manager_teachers' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Orqaga
+                    </a>
+                    <a href="{% url 'feedback:manager_teachers_edit' teacher.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i> Tahrirlash
+                    </a>
+                    <form method="post" action="{% url 'feedback:manager_teachers_delete' teacher.id %}" onsubmit="return confirm('O‘chirishga ishonchingiz komilmi?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-trash"></i> O‘chirish
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </header>
+
+        <div class="row">
+            <!-- Teacher Photo and Basic Info -->
+            <div class="col-lg-4">
+                <div class="card mb-4 fade-in">
+                    <div class="card-body text-center">
+                        <div class="teacher-photo mb-3">
+                            <div class="teacher-avatar">
+                                <img src="{{teacher.image.url}}" alt="{{teacher.user.get_full_name}}" srcset="">
+                            </div>
+                        </div>
+                        <h4 class="mb-1">{{ teacher.user.get_full_name }}</h4>
+                        {% if teacher.class_assigned %}
+                        <p class="text-muted mb-3">{{ teacher.class_assigned.name }} sinfi rahbari</p>
+                        {% else %}
+                        <p class="text-muted mb-3">Sinf tayinlanmagan</p>
+                        {% endif %}
+
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h5 class="mb-0 text-primary">{{ days_since_creation }}</h5>
+                                    <small class="text-muted">Kun faoliyat</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h5 class="mb-0 text-success">{{ total_evaluations }}</h5>
+                                    <small class="text-muted">Jami baholar</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h5 class="mb-0 text-info">{{ avg_score }}</h5>
+                                    <small class="text-muted">O'rtacha</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Performance Badge -->
+                        <div class="mt-3">
+                            {% if avg_score >= 90 %}
+                            <span class="badge bg-success performance-badge">A'lo o'qituvchi</span>
+                            {% elif avg_score >= 80 %}
+                            <span class="badge bg-warning performance-badge">Yaxshi o'qituvchi</span>
+                            {% elif avg_score >= 70 %}
+                            <span class="badge bg-info performance-badge">O'rtacha o'qituvchi</span>
+                            {% else %}
+                            <span class="badge bg-secondary performance-badge">Yangi o'qituvchi</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="card mb-4 fade-in">
+                    <div class="card mb-4 fade-in">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-bolt"></i> Tezkor amallar</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-3">
+                                <form method="post" action="{% url 'feedback:manager_teachers_detail' teacher.id %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-status btn-sm w-100">
+                                        {% if teacher.is_active %}
+                                        <i class="fas fa-toggle-off"></i> Nofaol qilish
+                                        {% else %}
+                                        <i class="fas fa-toggle-on"></i> Faollashtirish
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body">
+                        <div class="d-grid gap-3">
+                            {% if teacher.phone %}
+                            <a href="tel:{{ teacher.phone }}" class="btn btn-phone btn-sm">
+                                <i class="fas fa-phone"></i> {{ teacher.phone }}
+                            </a>
+                            {% endif %}
+                            {% if teacher.user.email %}
+                            <a href="mailto:{{ teacher.user.email }}" class="btn btn-email btn-sm">
+                                <i class="fas fa-envelope"></i> {{ teacher.user.email }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Activity -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-clock"></i> So'nggi faollik</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="activity-item activity-success">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Oxirgi kirish:</span>
+                                <span>{{ last_login|date:"d.m.Y H:i"|default:"Hech qachon" }}</span>
+                            </div>
+                        </div>
+                        <div class="activity-item activity-warning">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Bu hafta:</span>
+                                <span class="fw-bold text-primary">{{ weekly_evaluations }} ta baholash</span>
+                            </div>
+                        </div>
+                        <div class="activity-item activity-success">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Bu oy:</span>
+                                <span class="fw-bold text-success">{{ monthly_evaluations }} ta baholash</span>
+                            </div>
+                        </div>
+                        <div class="activity-item activity-secondary">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Ro'yxatdan o'tgan:</span>
+                                <span>{{ teacher.user.date_joined|date:"d.m.Y" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Information -->
+            <div class="col-lg-8">
+                <!-- Personal Information -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-user"></i> Shaxsiy ma'lumotlar</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Ism:</label>
+                                    <span>{{ teacher.user.first_name|default:"Ko'rsatilmagan" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Familiya:</label>
+                                    <span>{{ teacher.user.last_name|default:"Ko'rsatilmagan" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Login:</label>
+                                    <span class="badge bg-primary">{{ teacher.user.username }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Telefon:</label>
+                                    <span>
+                                        {% if teacher.phone_number %}
+                                        <a href="tel:{{ teacher.phone_number }}">
+                                            <i class="fas fa-phone"></i> {{ teacher.phone_number }}
+                                        </a>
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Holat:</label>
+                                    {% if teacher.is_active %}
+                                    <span class="badge bg-success">Faol</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Nofaol</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information -->
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-graduation-cap"></i> Ta'lim ma'lumotlari</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Fan:</label>
+                                    {% if teacher.subject %}
+                                    <span class="badge bg-success fs-6">{{ teacher.subject }}</span>
+                                    {% else %}
+                                    <span class="text-muted">Ko'rsatilmagan</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Tayinlangan sinf:</label>
+                                    {% if teacher.class_assigned %}
+                                    <span class="badge bg-primary fs-6">{{ teacher.class_assigned.name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">Tayinlanmagan</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Ishga qabul qilingan:</label>
+                                    <span>{{ teacher.user.date_joined|date:"d.m.Y" }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <label class="fw-bold text-muted">Ish tajribasi:</label>
+                                    <span>{{ days_since_creation }} kun</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Class Statistics -->
+                {% if class_stats %}
+                <div class="card mb-4 fade-in">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-users"></i> Sinf statistikasi</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-1 text-primary">{{ class_stats.total_students }}</h4>
+                                    <small class="text-muted">Jami o'quvchilar</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-1 text-success">{{ class_stats.evaluated_this_week }}</h4>
+                                    <small class="text-muted">Bu hafta baholangan</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-1 text-warning">{{ class_stats.weekly_percentage }}%</h4>
+                                    <small class="text-muted">Haftalik progress</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-1 text-info">{{ class_stats.class_average }}</h4>
+                                    <small class="text-muted">Sinf o'rtachasi</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3">
+                            <div class="progress">
+                                <div class="progress-bar bg-primary" role="progressbar"
+                                    style="width: {{ class_stats.weekly_percentage }}%"></div>
+                            </div>
+                            <small class="text-muted">Bu hafta {{ class_stats.weekly_percentage }}% o'quvchi
+                                baholangan</small>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                // Add fade-in animation to all cards
+                const cards = document.querySelectorAll('.card');
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.style.opacity = '0';
+                        card.style.transform = 'translateY(20px)';
+                        card.style.transition = 'all 0.5s ease';
+                        setTimeout(() => {
+                            card.style.opacity = '1';
+                            card.style.transform = 'translateY(0)';
+                        }, 100);
+                    }, index * 100);
+                });
+            });
+
+            function loadEvaluations() {
+                showAlert('Baholash tarixi yangilanmoqda...', 'info');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+
+            fu+
+            function printTeacher() {
+                window.print();
+            }
+
+            function exportTeacher() {
+                showAlert('O\'qituvchi ma\'lumotlari eksport qilinmoqda...', 'info');
+                // Bu yerda eksport logikasi bo'lishi kerak
+                setTimeout(() => {
+                    showAlert('Eksport muvaffaqiyatli yakunlandi!', 'success');
+                }, 2000);
+            }
+
+            function exportEvaluations() {
+                showAlert('Baholash tarixi eksport qilinmoqda...', 'info');
+                // Bu yerda eksport logikasi bo'lishi kerak
+                setTimeout(() => {
+                    showAlert('Baholash tarixi eksport qilindi!', 'success');
+                }, 2000);
+            }
+
+            function showAlert(message, type) {
+                const alertClass = type === 'error' ? 'alert-danger' :
+                    type === 'warning' ? 'alert-warning' :
+                        type === 'success' ? 'alert-success' : 'alert-info';
+
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert ${alertClass} alert-dismissible fade show position-fixed`;
+                alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; max-width: 500px;';
+                alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+                document.body.appendChild(alertDiv);
+
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.remove();
+                    }
+                }, 5000);
+            }
+
+            // Messages from Django
+            {% if messages %}
+            {% for message in messages %}
+            showAlert('{{ message }}', '{{ message.tags }}');
+            {% endfor %}
+            {% endif %}
+        </script>
+</body>
+
+</html>

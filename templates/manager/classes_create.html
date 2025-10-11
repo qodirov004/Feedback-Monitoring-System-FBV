@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangi sinf yaratish{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex items-center gap-4">
+            <a href="{% url 'feedback:manager_dashboard' %}"
+               class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                ← Orqaga
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Yangi sinf yaratish</h1>
+                <p class="text-gray-600">Sinf ma'lumotlarini kiriting</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="max-w-lg mx-auto bg-white rounded shadow p-6">
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Sinf nomi *</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Sinf darajasi *</label>
+                    {{ form.grade_level }}
+                    {% if form.grade_level.errors %}
+                        <p class="text-sm text-red-600">{{ form.grade_level.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Bo'lim *</label>
+                    {{ form.section }}
+                    {% if form.section.errors %}
+                        <p class="text-sm text-red-600">{{ form.section.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <a href="{% url 'feedback:manager_dashboard' %}"
+                       class="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200">Bekor qilish</a>
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

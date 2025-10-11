@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Statistika - Feedback Monitoring System{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4 flex flex-col lg:flex-row gap-3 lg:items-center lg:justify-between">
+            
+            <!-- Chap tomon: Orqaga link + sarlavha -->
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 text-center sm:text-left">
+                <a href="{% url 'feedback:manager_dashboard' %}"
+                   class="inline-flex items-center justify-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50">
+                   ← Orqaga
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Tizim statistikasi</h1>
+                    <p class="text-gray-600">To'liq tahlil va hisobotlar</p>
+                </div>
+            </div>
+
+            <!-- O‘ng tomon: Filter + eksport -->
+            <div class="flex flex-wrap gap-3 justify-center lg:justify-end items-center">
+                <form method="get" action="{% url 'feedback:manager_statistics' %}" 
+                      class="flex items-center gap-3 bg-gray-100 px-4 py-2 rounded-lg shadow">
+                    
+                    <label for="period" class="text-sm font-medium text-gray-700">Davr:</label>
+                    <select id="period" name="period" onchange="this.form.submit()"
+                            class="border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="week" {% if request.GET.period == 'week' %}selected{% endif %}>Haftalik</option>
+                        <option value="month" {% if request.GET.period == 'month' %}selected{% endif %}>Oylik</option>
+                        <option value="year" {% if request.GET.period == 'year' %}selected{% endif %}>Yillik</option>
+                    </select>
+                </form>
+
+                <!-- Excel eksport -->
+                <a href="{% url 'feedback:export_excel' %}?period={{ request.GET.period|default:'week' }}"
+                   class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded shadow hover:bg-blue-700 transition">
+                   📊 Excel
+                </a>
+
+                <!-- PDF eksport -->
+                <a href="{% url 'feedback:export_school_report' %}" class="inline-flex items-center justify-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded shadow hover:bg-green-700 transition">
+                    📄 PDF Hisobot
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container mx-auto px-4 py-8">
+        <!-- Summary Cards -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <a href="{% url 'feedback:manager_teachers_statistics' %}">
+                <div class="bg-white p-4 rounded-lg shadow hover:bg-gray-100 transition">
+                    <h3 class="text-sm font-medium">Jami o'qituvchilar</h3>
+                    <p class="text-2xl font-bold">{{ total_teachers }}</p>
+                </div>
+            </a>
+            <a href="{% url 'feedback:manager_students_statistics' %}" class="block bg-white p-4 rounded-lg shadow hover:bg-gray-50 transition">
+                <h3 class="text-sm font-medium">Jami o'quvchilar</h3>
+                <p class="text-2xl font-bold">{{ total_students }}</p>
+            </a>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium">Jami baholashlar</h3>
+                <p class="text-2xl font-bold">{{ total_evaluations }}</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="text-sm font-medium">O'rtacha ball</h3>
+                <p class="text-2xl font-bold">{{ avg_score }}</p>
+            </div>
+        </div>
+
+        <!-- Grafiklar -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-2">
+                <h3 class="text-md font-semibold mb-2">
+                    Tendensiya ({{ request.GET.period|default:'week' }} bo‘yicha)
+                </h3>
+                <div class="relative w-full h-64">
+                    <canvas id="trendsChart" class="absolute top-0 left-0 w-full h-full"></canvas>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-lg shadow md:col-span-2">
+                <h3 class="text-md font-semibold mb-2">Sinflar bo'yicha performance</h3>
+                <div class="relative w-full h-72">
+                    <canvas id="classPerformanceChart" class="absolute top-0 left-0 w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const trendData = {{ trends|safe }};
+            const classData = {{ class_stats|safe }};
+        </script>
+
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script>
+            new Chart(document.getElementById('trendsChart'), {
+                type: 'line',
+                data: {
+                    labels: trendData.map(item => item.week),
+                    datasets: [{
+                        label: "O'rtacha ball",
+                        data: trendData.map(item => item.avg_score),
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100 } }
+                }
+            });
+
+            new Chart(document.getElementById('classPerformanceChart'), {
+                type: 'bar',
+                data: {
+                    labels: classData.map(item => item.name),
+                    datasets: [{
+                        label: "O'rtacha ball",
+                        data: classData.map(item => {
+                            const score = parseFloat(item.avg_score);
+                            return isNaN(score) ? 0 : score;
+                        }),
+                        backgroundColor: 'rgba(34, 197, 94, 0.6)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Ball'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Sinflar'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        </script>
+    </div>
+</div>
+{% endblock %}
