@@ -28,7 +28,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = True
 ALLOWED_HOSTS = ["*"]
 
-SECRET_KEY = os.getenv('django-insecure-^+minav+sx4s5eb9+%n^bt8$(^2so$rybf$=-rbqz$hl0-bcs7')
+from decouple import config
+SECRET_KEY = config('SECRET_KEY')
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
 
